@@ -1,0 +1,12 @@
+- Attention mechanisms have become an integral part of compelling sequence modeling and transduc-tion models in various tasks, allowing modeling of dependencies without regard to their distance in the input or output sequences [2, 16].
+- 3.2 Attention An attention function can be described as mapping a query and a set of key-value pairs to an output, where the query, keys, values, and output are all vectors.
+- Scaled Dot-Product Attention Multi-Head Attention Figure 2: (left) Scaled Dot-Product Attention.
+- We compute the matrix of outputs as: Attention(Q, K, V ) = softmax( QK T √ dk )V (1) 1√ The two most commonly used attention functions are additive attention [2], and dot-product (multi-plicative) attention.
+- 3.2.2 Multi-Head Attention Instead of performing a single attention function with dmodel-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times with different, learned linear projections to dk, dk and dv dimensions, respectively.
+- 3.2.3 Applications of Attention in our Model The Transformer uses multi-head attention in three different ways: • In "encoder-decoder attention" layers, the queries come from the previous decoder layer, and the memory keys and values come from the output of the encoder.
+- 3.2.3 Applications of Attention in our Model The Transformer uses multi-head attention in three different ways: • In "encoder-decoder attention" layers, the queries come from the previous decoder layer, and the memory keys and values come from the output of the encoder.
+- This allows every position in the decoder to attend over all positions in the input sequence.
+- 3.3 Position-wise Feed-Forward Networks In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and identically.
+- FFN(x) = max(0, xW1 + b1)W2 + b2 (2) While the linear transformations are the same across different positions, they use different parameters from layer to layer.
+- We also use the usual learned linear transfor-mation and softmax function to convert the decoder output to predicted next-token probabilities.
+- In this work, we use sine and cosine functions of different frequencies: P E(pos,2i) = sin(pos/100002i/dmodel) P E(pos,2i+1) = cos(pos/100002i/dmodel) where pos is the position and i is the dimension.
