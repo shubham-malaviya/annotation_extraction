@@ -251,7 +251,8 @@ def custom_process_file(file: typ.BinaryIO,
 
     return result
 
-def write_list_to_markdown(output_path: str, file_name: str, items: list[str], mode="a") -> None:
+
+def write_list_to_markdown(output_path: str, file_name: str, entries: list[tuple[str, str, str]], mode="a") -> None:
     """
     Writes a list of strings to a Markdown file.
     - Uses the file name (without extension) as the title.
@@ -260,8 +261,14 @@ def write_list_to_markdown(output_path: str, file_name: str, items: list[str], m
     title = file_name.replace(".pdf", "").split("\\")[-1]
     with open(os.path.join(output_path, "consolidated_notes.md"), mode, encoding="utf-8") as f:
         f.write(f"# {title}\n\n")  # Markdown title
-        for item in items:
-            f.write(f"- {item}\n")
+        for entry in entries:
+            if entry[1] and not entry[0]: # standalone comment present
+                f.write(f"\n\n- > *standalone comment:* {entry[0]}\n\n")
+            else: # context sentence is present
+                if not entry[1]:
+                    f.write(f"- {entry[0]}\n")
+                else: # related comment is also present
+                    f.write(f"- {entry[0]}\n\n\t> *comment:* {entry[1]}\n\t>\n\t> *highlight_text:* {entry[2]}\n\n")
         f.write("---\n\n")
 
 def main():
@@ -272,16 +279,19 @@ def main():
             file_path = os.path.join(root, file_name)
             print("Currently Processing: ", file_path)
             if ".pdf" in file_path:
-                context_sentences = []
+                entries = []
                 document = custom_process_file(open(file_path, "rb"))
 
                 for page_idx in range(len(document.pages)):
                     annots = document.pages[page_idx].annots
                     for annot in annots:
-                        if annot.context_sentence != None:
-                            context_sentences.append(annot.context_sentence)
+                        contents = annot.contents
+                        context = annot.context_sentence
+                        text = annot.gettext()
+
+                        entries.append((context,contents,text)) # context_sentence, comment, highlighted text
                 
-                if len(context_sentences) == 0:
+                if not any(t[0] is not None for t in entries):
                     print("No context sentences found.")
                 else:
                     output_path = args.input_path if args.output_path is None else args.output_path
@@ -290,7 +300,7 @@ def main():
                         os.makedirs(output_path)
                     
                     mode = "w" if first else "a"
-                    write_list_to_markdown(output_path, file_path, context_sentences, mode)
+                    write_list_to_markdown(output_path, file_path, entries, mode)
                     first = False
 
 if __name__ == "__main__":

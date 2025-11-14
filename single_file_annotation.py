@@ -251,7 +251,7 @@ def custom_process_file(file: typ.BinaryIO,
 
     return result
 
-def write_list_to_markdown(file_name: str, items: list[str]) -> None:
+def write_list_to_markdown(file_name: str, entries: list[tuple[str, str, str]]) -> None:
     """
     Writes a list of strings to a Markdown file.
     - Uses the file name (without extension) as the title.
@@ -262,23 +262,32 @@ def write_list_to_markdown(file_name: str, items: list[str]) -> None:
     print("Context sentences written to", out_file)
     with open(out_file, "w", encoding="utf-8") as f:
         # f.write(f"# {title}\n\n")  # Markdown title
-        for item in items:
-            f.write(f"- {item}\n")
+        for entry in entries:
+            if entry[1] and not entry[0]: # standalone comment present
+                f.write(f"\n\n- > *standalone comment:* {entry[0]}\n\n")
+            else: # context sentence is present
+                if not entry[1]:
+                    f.write(f"- {entry[0]}\n")
+                else: # related comment is also present
+                    f.write(f"- {entry[0]}\n\n\t> *comment:* {entry[1]}\n\t>\n\t> *highlight_text:* {entry[2]}\n\n")
 
 def main():
-    context_sentences = []
+    entries = []
     document = custom_process_file(open(args.input_file, "rb"))
 
     for page_idx in range(len(document.pages)):
         annots = document.pages[page_idx].annots
         for annot in annots:
-            if annot.context_sentence != None:
-                context_sentences.append(annot.context_sentence)
+            contents = annot.contents
+            context = annot.context_sentence
+            text = annot.gettext()
+
+            entries.append((context,contents,text)) # context_sentence, comment, highlighted text
     
-    if len(context_sentences) == 0:
+    if not any(t[0] is not None for t in entries):
         print("No context sentences found.")
     else:
-        write_list_to_markdown(args.input_file, context_sentences)
+        write_list_to_markdown(args.input_file, entries)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
